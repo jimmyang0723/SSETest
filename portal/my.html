@@ -1,0 +1,78 @@
+<html>
+  <body>
+    <button id="connect-btn">Connect</button>
+    <button id="stop-btn">Stop</button>
+    <button id="show-btn">Show Me!</button>
+    <ul>
+    </ul>
+    <script>
+      let myCnt = 0
+      let eventSource;
+      const eventList = document.querySelector('ul');
+      let firstEle = document.createElement("li");
+      firstEle.textContent="message: first message"
+      eventList.appendChild(firstEle)
+      const onMessage = (event) => {
+        console.log('On message event')
+        console.log(event)
+        const data = JSON.parse(event.data);
+        console.log(data);
+        myCnt += 1
+        const newElement = document.createElement("li");
+        newElement.textContent="message:" + event.data
+        eventList.appendChild(newElement);
+      };
+      const onError = (err) => { 
+          console.log(err.status)
+       
+      };
+      const connectBtn = document.getElementById("connect-btn");
+      const stopBtn = document.getElementById("stop-btn");
+      const showBtn = document.getElementById("show-btn");
+      connectBtn.addEventListener("click", () => {
+        let btn = document.getElementById("connect-btn")
+        if (btn.disabled) {
+           console.log('Do nothing')
+        } else {
+          eventSource = new EventSource("http://localhost:4000/event");
+          eventSource.onopen = () => {
+            let oEle = document.createElement("li");
+            oEle.textContent=`message: open conenection. readyStat: ${eventSource.readyState}`
+            eventList.appendChild(oEle)
+            console.log(eventSource.readyState)
+          };
+          eventSource.onclose = () => {
+            console.log("connection closed")
+            console.log(myCnt)
+          }
+          eventSource.onmessage = onMessage
+          eventSource.addEventListener("ping", (event) => {
+            console.log('On Ping event')
+            console.log(event)
+            const data = JSON.parse(event.data);
+            console.log(data);
+            myCnt += 1
+          }, false);
+          console.log(eventSource.onmessage)
+          eventSource.onerror = onError;
+          console.log(eventSource.readyState)
+          btn.disabled = true
+          btn.readOnly = true
+        }
+      });
+      stopBtn.addEventListener("click", () => {
+        let btn = document.getElementById("connect-btn")
+        btn.disabled = false
+        btn.readOnly = false
+        eventSource.close();
+        let cEle = document.createElement("li");
+        cEle.textContent="message: closed connection"
+        eventList.appendChild(cEle)
+      });
+      showBtn.addEventListener("click", () => {
+          value = "My value is " + myCnt
+          alert(value)
+      });
+    </script>
+  </body>
+</html>
